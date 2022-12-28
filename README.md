@@ -17,10 +17,10 @@ SASRec Reference : https://github.com/pmixer/SASRec.pytorch
 ## Model
 <img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="600" height="600"></img>
 
-  > Embedding Layer  
+  > ### Embedding Layer  
   모든 유저 구매기록 10개로 slicing, 구매기록 3개 이하인 유저 기록 삭제  
   
-  > Parallel multi-head attention  
+  > ### Parallel multi-head attention  
   이질적인 보조 정보를 독립적으로 활용하기 위해 보조정보수와 동일하게 parallel attention block 구성  
   각 attention block에서 나온 결과를 point-wise sum
 
