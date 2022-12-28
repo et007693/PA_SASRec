@@ -24,7 +24,17 @@ SASRec Reference : https://github.com/pmixer/SASRec.pytorch
   이질적인 보조 정보를 독립적으로 활용하기 위해 보조정보수와 동일하게 parallel attention block 구성  
   각 attention block에서 나온 결과를 point-wise sum
 
-## 실행 코드
+## Experiment Setting
+Dataset : book_transaction_data  
+batch size : 256  
+max_len : 10  
+epochs : 61  
+optimizer : ADAM  
+평가지표 : NDCG10, HR10  
+
+## Result
+
+## run code
 ``` python
 main.py --dataset=book_transactions --train_dir=default --maxlen=10 --dropout_rate=0.2 --device=cuda
 ```
