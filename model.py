@@ -21,42 +21,36 @@ class PointWiseFeedForward(torch.nn.Module):
         outputs += inputs
         return outputs
 
-import torch.nn as nn
-
 class MultiHeadAttentionLayer(nn.Module):
-    def __init__(self, hidden_dim, n_heads, dropout_ratio, device):
+    def __init__(self, hidden_dim, num_heads, dropout_ratio, device):
         super().__init__()
 
-        assert hidden_dim % n_heads == 0
+        assert hidden_dim % num_heads == 0
 
         self.hidden_dim = hidden_dim # 임베딩 차원
-        self.n_heads = n_heads # 헤드(head)의 개수: 서로 다른 어텐션(attention) 컨셉의 수
-        self.head_dim = hidden_dim // n_heads # 각 헤드(head)에서의 임베딩 차원
+        self.num_heads = num_heads # 헤드(head)의 개수: 서로 다른 어텐션(attention) 컨셉의 수
+        self.head_dim = hidden_dim // num_heads # 각 헤드(head)에서의 임베딩 차원
 
         self.fc_q = nn.Linear(hidden_dim, hidden_dim) # Query 값에 적용될 FC 레이어
         self.fc_k = nn.Linear(hidden_dim, hidden_dim) # Key 값에 적용될 FC 레이어
         self.fc_v = nn.Linear(hidden_dim, hidden_dim) # Value 값에 적용될 FC 레이어
-        self.fc_q_s = nn.Linear(hidden_dim, hidden_dim)
-        self.fc_k_s = nn.Linear(hidden_dim, hidden_dim)
-
-        self.fc_o = nn.Linear(hidden_dim, hidden_dim)
 
         self.dropout = nn.Dropout(dropout_ratio)
 
         self.scale = torch.sqrt(torch.FloatTensor([self.head_dim])).to(device)
 
-    def forward(self, query, key, query_side, key_side, value, mask = None):
+    def forward(self, query, key, value, mask = None):
 
         batch_size = query.shape[0]
         Q = self.fc_q(query)
         K = self.fc_k(key)
         V = self.fc_v(value)
 
-        # hidden_dim → n_heads X head_dim 형태로 변형
-        # n_heads(h)개의 서로 다른 어텐션(attention) 컨셉을 학습하도록 유도
-        Q = Q.view(batch_size, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
-        K = K.view(batch_size, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
-        V = V.view(batch_size, -1, self.n_heads, self.head_dim).permute(0, 2, 1, 3)
+        # hidden_dim → num_heads X head_dim 형태로 변형
+        # num_heads(h)개의 서로 다른 어텐션(attention) 컨셉을 학습하도록 유도
+        Q = Q.view(batch_size, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        K = K.view(batch_size, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        V = V.view(batch_size, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
 
         # Attention Energy 계산
         energy = torch.matmul(Q, K.permute(0, 1, 3, 2)) / self.scale
@@ -75,8 +69,6 @@ class MultiHeadAttentionLayer(nn.Module):
         x = x.permute(0, 2, 1, 3).contiguous()
 
         x = x.view(batch_size, -1, self.hidden_dim)
-
-        x = self.fc_o(x)
 
         return x, attention
 
@@ -177,16 +169,6 @@ class SASRec(torch.nn.Module):
         seqs3 += self.pos_emb(torch.LongTensor(positions).to(self.dev))
         seqs3 = self.emb_dropout(seqs3)
 
-        # for mask
-        seqs_s1 += self.pos_emb(torch.LongTensor(positions).to(self.dev))
-        seqs_s1 = self.emb_dropout(seqs_s1)
-
-        seqs_s2 += self.pos_emb(torch.LongTensor(positions).to(self.dev))
-        seqs_s2 = self.emb_dropout(seqs_s2)
-
-        seqs_s3 += self.pos_emb(torch.LongTensor(positions).to(self.dev))
-        seqs_s3 = self.emb_dropout(seqs_s3)
-
         ######
         timeline_mask = torch.BoolTensor(log_seqs == 0).to(self.dev)
 
@@ -194,27 +176,21 @@ class SASRec(torch.nn.Module):
         seqs2 *= ~timeline_mask.unsqueeze(-1) 
         seqs3 *= ~timeline_mask.unsqueeze(-1) 
 
-        seqs_s1 *= ~timeline_mask.unsqueeze(-1)
-        seqs_s2 *= ~timeline_mask.unsqueeze(-1)
-        seqs_s3 *= ~timeline_mask.unsqueeze(-1)
 
         tl = seqs1.shape[1] # time dim len for enforce causality
         attention_mask = ~torch.tril(torch.ones((tl, tl), dtype=torch.bool, device=self.dev))
         for i in range(len(self.attention_layers1)):
             
             Q1 = self.attention_layernorms1[i](seqs1)
-            Q1_s = self.attention_layernorms1[i](seqs_s1)
-            mha_outputs1, _ = self.attention_layers1[i](Q1, seqs1, seqs1, Q1_s, seqs_s1,
+            mha_outputs1, _ = self.attention_layers1[i](Q1, seqs1, seqs1, 
                                             mask=attention_mask)
             
             Q2 = self.attention_layernorms2[i](seqs2)
-            Q2_s = self.attention_layernorms1[i](seqs_s2)
-            mha_outputs2, _ = self.attention_layers2[i](Q2, seqs2, seqs2, Q2_s, seqs_s2,
+            mha_outputs2, _ = self.attention_layers2[i](Q2, seqs2, seqs2,
                                             mask=attention_mask)
 
             Q3 = self.attention_layernorms3[i](seqs3)
-            Q3_s = self.attention_layernorms1[i](seqs_s3)
-            mha_outputs3, _ = self.attention_layers3[i](Q3, seqs3, seqs3, Q3_s, seqs_s3,
+            mha_outputs3, _ = self.attention_layers3[i](Q3, seqs3, seqs3, 
                                             mask=attention_mask)
 
             seqs1 = Q1 + mha_outputs1 
@@ -242,7 +218,6 @@ class SASRec(torch.nn.Module):
     def forward(self, user_ids, log_seqs, pos_seqs, neg_seqs, log_seqs_side1, pos_seq_side1, neg_seqs_side1, 
     log_seqs_side2, pos_seqs_side2, neg_seqs_side2, log_seqs_side3, pos_seqs_side3, neg_seqs_side3):  
         log_feats = self.log2feats(log_seqs, log_seqs_side1, log_seqs_side2, log_seqs_side3)
-
 
         pos_embs = (self.item_emb(torch.LongTensor(pos_seqs).to(self.dev)) )
 
