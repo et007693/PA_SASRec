@@ -1,4 +1,4 @@
-<img src="https://img.shields.io/badge/PA_SASRec-FFCA28?style=flat-square&logo=0288D1&logoColor=black"/>
+<img src="https://img.shields.io/badge/PA_SASRec-0288D1?style=flat-square&logo=0288D1&logoColor=black"/>
 
 ## Description
 사용자의 구매 정보와 보조 정보를 활용한 SASRec 성능 향상 프로젝트  
