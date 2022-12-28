@@ -2,7 +2,7 @@
 캡스톤프로젝트
 
 ### 모델 구조
-<img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="90%" width="200" height="500"></img>
+<img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="90%" width="150" height="500"></img>
 
 ## 실행 코드
 ``` python
