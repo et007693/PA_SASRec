@@ -2,7 +2,7 @@
 
 
 ## 모델 구조
-<img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="90%" width="50" height="200"></img>
+<img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="50" height="200"></img>
 
 ## 실행 코드
 ``` python
