@@ -12,8 +12,6 @@ RAM : 16GB
 python version : 3.9.7  
 torch version : 1.10.0+cu113  
 
-SASRec Reference : https://github.com/pmixer/SASRec.pytorch
-
 ## Model
 <img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="600" height="600"></img>
 
@@ -38,3 +36,6 @@ optimizer : ADAM
 ``` python
 main.py --dataset=book_transactions --train_dir=default --maxlen=10 --dropout_rate=0.2 --device=cuda
 ```
+
+## Reference
+https://github.com/pmixer/SASRec.pytorch
