@@ -1,8 +1,8 @@
-# PA_SASRec
-캡스톤프로젝트
+# 캡스톤프로젝트 - PA_SASRec
+
 
 ## 모델 구조
-<img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="90%" width="50" height="600"></img>
+<img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="90%" width="50" height="100"></img>
 
 ## 실행 코드
 ``` python
