@@ -14,10 +14,18 @@ torch version : 1.10.0+cu113
 
 SASRec Reference : https://github.com/pmixer/SASRec.pytorch
 
-## 모델 구조
+## Model
 <img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="600" height="600"></img>
 
-## 
+  Embedding Layer  
+  모든 유저 구매기록 10개로 slicing, 구매기록 3개 이하인 유저 기록 삭제  
+  
+  Parallel multi-head attention  
+  이질적인 보조 정보를 독립적으로 활용하기 위해 보조 정보수만큼 head 구성  
+  
+  head별로 item_id + side_information
+  
+
 
 ## 실행 코드
 ``` python
