@@ -1,4 +1,4 @@
-<img src="https://capsule-render.vercel.app/api?type=waving&color=auto&height=200&section=header&text=PA_SASRec&fontSize=50" />
+#PA_SASRec
 
 ## Description
 사용자의 구매 정보와 보조 정보를 활용한 SASRec 성능 향상 프로젝트  
