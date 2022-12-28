@@ -2,6 +2,7 @@ import os
 import time
 import torch
 import argparse
+import pandas as pd
 
 from model import SASRec
 from utils import *
@@ -21,7 +22,7 @@ parser.add_argument('--hidden_units', default=50, type=int)
 parser.add_argument('--num_blocks', default=2, type=int)
 parser.add_argument('--num_epochs', default=61, type=int)
 parser.add_argument('--num_heads', default=1, type=int)
-parser.add_argument('--dropout_rate', default=0.2, type=float)
+parser.add_argument('--dropout_rate', default=0.5, type=float)
 parser.add_argument('--l2_emb', default=0.0, type=float)
 parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--inference_only', default=False, type=str2bool)
@@ -38,7 +39,11 @@ if __name__ == '__main__':
     # global dataset
     dataset = data_partition(args.dataset)
 
-    [user_train, user_valid, user_test, usernum, itemnum] = dataset
+    [user_train, user_valid, user_test, usernum, itemnum,
+    user_train_side1, user_valid_side1, user_test_side1, side1num,
+    user_train_side2, user_valid_side2, user_test_side2, side2num,
+    user_train_side3, user_valid_side3, user_test_side3, side3num, item_side] = dataset
+
     num_batch = len(user_train) // args.batch_size # tail? + ((len(user_train) % args.batch_size) != 0)
     cc = 0.0
     for u in user_train:
@@ -47,18 +52,16 @@ if __name__ == '__main__':
     
     f = open(os.path.join(args.dataset + '_' + args.train_dir, 'log.txt'), 'w')
     
-    sampler = WarpSampler(user_train, usernum, itemnum, batch_size=args.batch_size, maxlen=args.maxlen, n_workers=3)
-    model = SASRec(usernum, itemnum, args).to(args.device) # no ReLU activation in original SASRec implementation?
+    sampler = WarpSampler(user_train, user_train_side1, user_train_side2, user_train_side3, usernum, itemnum, item_side, batch_size=args.batch_size, maxlen=args.maxlen, n_workers=3)
+    
+    model = SASRec(usernum, itemnum, side1num, side2num, side3num, args).to(args.device) # no ReLU activation in original SASRec implementation?
     
     for name, param in model.named_parameters():
         try:
             torch.nn.init.xavier_normal_(param.data)
         except:
             pass # just ignore those failed init layers
-    
-    # this fails embedding init 'Embedding' object has no attribute 'dim'
-    # model.apply(torch.nn.init.xavier_uniform_)
-    
+
     model.train() # enable model training
     
     epoch_start_idx = 1
@@ -78,21 +81,25 @@ if __name__ == '__main__':
         model.eval()
         t_test = evaluate(model, dataset, args)
         print('test (NDCG@10: %.4f, HR@10: %.4f)' % (t_test[0], t_test[1]))
-    
-    # ce_criterion = torch.nn.CrossEntropyLoss()
-    # https://github.com/NVIDIA/pix2pixHD/issues/9 how could an old bug appear again...
+
     bce_criterion = torch.nn.BCEWithLogitsLoss() # torch.nn.BCELoss()
     adam_optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.98))
     
     T = 0.0
     t0 = time.time()
-    
+    ####
+    result= pd.DataFrame(columns=['NDCG_val', 'HR_val','NDCG_test', 'HR_test'])
+    ####
     for epoch in range(epoch_start_idx, args.num_epochs + 1):
         if args.inference_only: break # just to decrease identition
         for step in range(num_batch): # tqdm(range(num_batch), total=num_batch, ncols=70, leave=False, unit='b'):
-            u, seq, pos, neg = sampler.next_batch() # tuples to ndarray
-            u, seq, pos, neg = np.array(u), np.array(seq), np.array(pos), np.array(neg)
-            pos_logits, neg_logits = model(u, seq, pos, neg)
+            u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3 = sampler.next_batch() # tuples to ndarray
+            u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3 = (
+            np.array(u), np.array(seq), np.array(pos), np.array(neg), 
+            np.array(seq_side1), np.array(pos_side1), np.array(neg_side1), 
+            np.array(seq_side2), np.array(pos_side2), np.array(neg_side2), 
+            np.array(seq_side3), np.array(pos_side3), np.array(neg_side3))
+            pos_logits, neg_logits = model(u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3)
             pos_labels, neg_labels = torch.ones(pos_logits.shape, device=args.device), torch.zeros(neg_logits.shape, device=args.device)
             # print("\neye ball check raw_logits:"); print(pos_logits); print(neg_logits) # check pos_logits > 0, neg_logits < 0
             adam_optimizer.zero_grad()
@@ -113,7 +120,10 @@ if __name__ == '__main__':
             t_valid = evaluate_valid(model, dataset, args)
             print('epoch:%d, time: %f(s), valid (NDCG@10: %.4f, HR@10: %.4f), test (NDCG@10: %.4f, HR@10: %.4f)'
                     % (epoch, T, t_valid[0], t_valid[1], t_test[0], t_test[1]))
-    
+            #####
+            data_to_insert = {'NDCG_val':t_valid[0], 'HR_val':t_valid[1],'NDCG_test':t_test[0], 'HR_test':t_test[1]}
+            result = result.append(data_to_insert, ignore_index=True)
+            #####
             f.write(str(t_valid) + ' ' + str(t_test) + '\n')
             f.flush()
             t0 = time.time()
@@ -127,4 +137,7 @@ if __name__ == '__main__':
     
     f.close()
     sampler.close()
+    #####
+    result.to_csv('./%s.csv'% args.dataset, index=False)
+    #####
     print("Done")
