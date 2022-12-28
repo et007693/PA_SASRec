@@ -2,8 +2,8 @@
 도서 추천 시스템
 
 ## 프로젝트 설명
-사용자의 구매 정보와 보조 정보를 활용한 SASRec 성능 향상 프로젝트
-  refer : https://github.com/pmixer/SASRec.pytorch
+사용자의 구매 정보와 보조 정보를 활용한 SASRec 성능 향상 프로젝트  
+refer : https://github.com/pmixer/SASRec.pytorch
 
 
 ## 모델 구조
