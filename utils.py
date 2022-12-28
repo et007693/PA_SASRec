@@ -6,17 +6,12 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from multiprocessing import Process, Queue
-#import time
-#import datetime as dt
-#from datetime import date
 
-# sampler for batch generation
 def random_neq(l, r, s):
     t = np.random.randint(l, r)
     while t in s:
         t = np.random.randint(l, r)
     return t
-
 
 def sample_function(user_train, user_train_side1, user_train_side2, user_train_side3, usernum, itemnum,item_side, batch_size, maxlen, result_queue, SEED):
     def sample():
@@ -110,11 +105,8 @@ class WarpSampler(object):
             p.terminate()
             p.join()
 
-
-# train/val/test data generation
 def data_partition(fname):
 
-    
     usernum = 0
     itemnum = 0
     user_train = {}
@@ -217,8 +209,6 @@ def data_partition(fname):
     user_train_side2, user_valid_side2, user_test_side2, side2num,
     user_train_side3, user_valid_side3, user_test_side3, side3num, item_side]
 
-# TODO: merge evaluate functions for test and val set
-# evaluate on test set
 def evaluate(model, dataset, args):
     [train, valid, test, usernum, itemnum,
     train_side1, valid_side1, test_side1, side1num,
@@ -295,7 +285,7 @@ def evaluate(model, dataset, args):
             item_side3_idx.append(item_side.loc[t]['side3'])
 
         predictions = -model.predict(*[np.array(l) for l in [[u], [seq], item_idx, [seq_side1], item_side1_idx,[seq_side2], item_side2_idx,[seq_side3], item_side3_idx]])
-        predictions = predictions[0] # - for 1st argsort DESC
+        predictions = predictions[0] 
     
 
         rank = predictions.argsort().argsort()[0].item()
@@ -311,8 +301,6 @@ def evaluate(model, dataset, args):
 
     return NDCG / valid_user, HT / valid_user
 
-
-# evaluate on val set
 def evaluate_valid(model, dataset, args):
     [train, valid, test, usernum, itemnum,
     train_side1, valid_side1, test_side1, side1num,

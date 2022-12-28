@@ -36,7 +36,6 @@ with open(os.path.join(args.dataset + '_' + args.train_dir, 'args.txt'), 'w') as
 f.close()
 
 if __name__ == '__main__':
-    # global dataset
     dataset = data_partition(args.dataset)
 
     [user_train, user_valid, user_test, usernum, itemnum,
@@ -44,7 +43,7 @@ if __name__ == '__main__':
     user_train_side2, user_valid_side2, user_test_side2, side2num,
     user_train_side3, user_valid_side3, user_test_side3, side3num, item_side] = dataset
 
-    num_batch = len(user_train) // args.batch_size # tail? + ((len(user_train) % args.batch_size) != 0)
+    num_batch = len(user_train) // args.batch_size 
     cc = 0.0
     for u in user_train:
         cc += len(user_train[u])
@@ -54,15 +53,14 @@ if __name__ == '__main__':
     
     sampler = WarpSampler(user_train, user_train_side1, user_train_side2, user_train_side3, usernum, itemnum, item_side, batch_size=args.batch_size, maxlen=args.maxlen, n_workers=3)
     
-    model = SASRec(usernum, itemnum, side1num, side2num, side3num, args).to(args.device) # no ReLU activation in original SASRec implementation?
-    
+    model = SASRec(usernum, itemnum, side1num, side2num, side3num, args).to(args.device) 
     for name, param in model.named_parameters():
         try:
             torch.nn.init.xavier_normal_(param.data)
         except:
-            pass # just ignore those failed init layers
+            pass 
 
-    model.train() # enable model training
+    model.train() 
     
     epoch_start_idx = 1
     if args.state_dict_path is not None:
@@ -70,7 +68,7 @@ if __name__ == '__main__':
             model.load_state_dict(torch.load(args.state_dict_path, map_location=torch.device(args.device)))
             tail = args.state_dict_path[args.state_dict_path.find('epoch=') + 6:]
             epoch_start_idx = int(tail[:tail.find('.')]) + 1
-        except: # in case your pytorch version is not 1.6 etc., pls debug by pdb if load weights failed
+        except: 
             print('failed loading state_dicts, pls check file path: ', end="")
             print(args.state_dict_path)
             print('pdb enabled for your quick check, pls type exit() if you do not need it')
@@ -82,18 +80,17 @@ if __name__ == '__main__':
         t_test = evaluate(model, dataset, args)
         print('test (NDCG@10: %.4f, HR@10: %.4f)' % (t_test[0], t_test[1]))
 
-    bce_criterion = torch.nn.BCEWithLogitsLoss() # torch.nn.BCELoss()
+    bce_criterion = torch.nn.BCEWithLogitsLoss() 
     adam_optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.98))
     
     T = 0.0
     t0 = time.time()
-    ####
     result= pd.DataFrame(columns=['NDCG_val', 'HR_val','NDCG_test', 'HR_test'])
-    ####
+
     for epoch in range(epoch_start_idx, args.num_epochs + 1):
-        if args.inference_only: break # just to decrease identition
-        for step in range(num_batch): # tqdm(range(num_batch), total=num_batch, ncols=70, leave=False, unit='b'):
-            u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3 = sampler.next_batch() # tuples to ndarray
+        if args.inference_only: break 
+        for step in range(num_batch): 
+            u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3 = sampler.next_batch() 
             u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3 = (
             np.array(u), np.array(seq), np.array(pos), np.array(neg), 
             np.array(seq_side1), np.array(pos_side1), np.array(neg_side1), 
@@ -101,7 +98,6 @@ if __name__ == '__main__':
             np.array(seq_side3), np.array(pos_side3), np.array(neg_side3))
             pos_logits, neg_logits = model(u, seq, pos, neg, seq_side1, pos_side1, neg_side1, seq_side2, pos_side2, neg_side2, seq_side3, pos_side3, neg_side3)
             pos_labels, neg_labels = torch.ones(pos_logits.shape, device=args.device), torch.zeros(neg_logits.shape, device=args.device)
-            # print("\neye ball check raw_logits:"); print(pos_logits); print(neg_logits) # check pos_logits > 0, neg_logits < 0
             adam_optimizer.zero_grad()
             indices = np.where(pos != 0)
             loss = bce_criterion(pos_logits[indices], pos_labels[indices])
@@ -109,7 +105,7 @@ if __name__ == '__main__':
             for param in model.item_emb.parameters(): loss += args.l2_emb * torch.norm(param)
             loss.backward()
             adam_optimizer.step()
-            print("loss in epoch {} iteration {}: {}".format(epoch, step, loss.item())) # expected 0.4~0.6 after init few epochs
+            print("loss in epoch {} iteration {}: {}".format(epoch, step, loss.item())) 
     
         if epoch % 20 == 0:
             model.eval()
@@ -120,10 +116,8 @@ if __name__ == '__main__':
             t_valid = evaluate_valid(model, dataset, args)
             print('epoch:%d, time: %f(s), valid (NDCG@10: %.4f, HR@10: %.4f), test (NDCG@10: %.4f, HR@10: %.4f)'
                     % (epoch, T, t_valid[0], t_valid[1], t_test[0], t_test[1]))
-            #####
             data_to_insert = {'NDCG_val':t_valid[0], 'HR_val':t_valid[1],'NDCG_test':t_test[0], 'HR_test':t_test[1]}
             result = result.append(data_to_insert, ignore_index=True)
-            #####
             f.write(str(t_valid) + ' ' + str(t_test) + '\n')
             f.flush()
             t0 = time.time()
@@ -137,7 +131,5 @@ if __name__ == '__main__':
     
     f.close()
     sampler.close()
-    #####
-    result.to_csv('./%s.csv'% args.dataset, index=False)
-    #####
+    result.to_csv('./result/%s.csv'% args.dataset, index=False)
     print("Done")

@@ -17,7 +17,7 @@ class PointWiseFeedForward(torch.nn.Module):
 
     def forward(self, inputs):
         outputs = self.dropout2(self.conv2(self.relu(self.dropout1(self.conv1(inputs.transpose(-1, -2))))))
-        outputs = outputs.transpose(-1, -2) # as Conv1D requires (N, C, Length)
+        outputs = outputs.transpose(-1, -2) 
         outputs += inputs
         return outputs
 
@@ -83,13 +83,12 @@ class SASRec(torch.nn.Module):
         self.side3num = side3num
         self.dev = args.device
 
-        # TODO: loss += args.l2_emb for regularizing embedding vectors during training
         self.item_emb = torch.nn.Embedding(self.item_num+1, args.hidden_units, padding_idx=0)
         self.side1_emb = torch.nn.Embedding(self.side1num+1, args.hidden_units, padding_idx=0)
         self.side2_emb = torch.nn.Embedding(self.side2num+1, args.hidden_units, padding_idx=0)
         self.side3_emb = torch.nn.Embedding(self.side3num+1, args.hidden_units, padding_idx=0)
 
-        self.pos_emb = torch.nn.Embedding(args.maxlen, args.hidden_units) # TO IMPROVE
+        self.pos_emb = torch.nn.Embedding(args.maxlen, args.hidden_units) 
         self.emb_dropout = torch.nn.Dropout(p=args.dropout_rate)
 
         self.attention_layernorms1 = torch.nn.ModuleList()
@@ -141,7 +140,7 @@ class SASRec(torch.nn.Module):
 
 
     def log2feats(self, log_seqs, side1_seqs, side2_seqs, side3_seqs):
-        # scaled
+        # 스케일링
         seqs = self.item_emb(torch.LongTensor(log_seqs).to(self.dev))
         seqs *= self.item_emb.embedding_dim ** 0.5
 
@@ -169,15 +168,13 @@ class SASRec(torch.nn.Module):
         seqs3 += self.pos_emb(torch.LongTensor(positions).to(self.dev))
         seqs3 = self.emb_dropout(seqs3)
 
-        ######
         timeline_mask = torch.BoolTensor(log_seqs == 0).to(self.dev)
 
-        seqs1 *= ~timeline_mask.unsqueeze(-1) # broadcast in last dim
+        seqs1 *= ~timeline_mask.unsqueeze(-1) 
         seqs2 *= ~timeline_mask.unsqueeze(-1) 
         seqs3 *= ~timeline_mask.unsqueeze(-1) 
 
-
-        tl = seqs1.shape[1] # time dim len for enforce causality
+        tl = seqs1.shape[1] 
         attention_mask = ~torch.tril(torch.ones((tl, tl), dtype=torch.bool, device=self.dev))
         for i in range(len(self.attention_layers1)):
             
@@ -210,7 +207,7 @@ class SASRec(torch.nn.Module):
             seqs3 *=  ~timeline_mask.unsqueeze(-1)
 
         seqs = seqs1 + seqs2 + seqs3
-        log_feats = self.last_layernorm(seqs) # (U, T, C) -> (U, -1, C)
+        log_feats = self.last_layernorm(seqs) 
 
         return log_feats
 
@@ -228,19 +225,17 @@ class SASRec(torch.nn.Module):
 
 
 
-        return pos_logits, neg_logits # pos_pred, neg_pred
+        return pos_logits, neg_logits 
 
     def predict(self, user_ids, log_seqs, item_indices
     , log_seqs_side1, item_indices_side1
     , log_seqs_side2, item_indices_side2
-    , log_seqs_side3, item_indices_side3): # for inference
+    , log_seqs_side3, item_indices_side3): 
         
         log_feats = self.log2feats(log_seqs, log_seqs_side1, log_seqs_side2, log_seqs_side3)
 
-        final_feat = log_feats[:, -1, :] # only use last QKV classifier, a waste
-
-        item_embs = self.item_emb(torch.LongTensor(item_indices).to(self.dev)) # (U, I, C)
-
+        final_feat = log_feats[:, -1, :] 
+        item_embs = self.item_emb(torch.LongTensor(item_indices).to(self.dev)) 
         logits = item_embs.matmul(final_feat.unsqueeze(-1)).squeeze(-1)
 
-        return logits # preds # (U, I)
+        return logits 
