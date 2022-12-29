@@ -28,7 +28,7 @@ pytorch version : 1.10.0+cu113
 Dataset : book_transaction_data  
 batch size : 256  
 max_len : 10  
-epochs : 61  
+epochs : 41  
 optimizer : ADAM  
 평가지표 : NDCG10, HR10  
 
