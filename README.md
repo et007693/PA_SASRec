@@ -31,9 +31,6 @@ max_len : 10
 epochs : 41  
 optimizer : ADAM  
 평가지표 : NDCG10, HR10  
-<span style="color:red">8.4%</span>
-<span style="color:red"> 글씨색 변경 </span>
-
 
 ## Result
 
