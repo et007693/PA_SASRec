@@ -31,14 +31,14 @@ max_len : 10
 epochs : 41  
 optimizer : ADAM  
 평가지표 : NDCG10, HR10  
-
+<span style="color:red">**8.4%**</span>
 ## Result
 
 |평가지표|NDCG@10|Improvement|HR@10|Improvement|
 |:------:|:---:|:---:|:---:|:---:|
 |SASRec|0.377|-|0.512|-|
 |PA_SASRec|0.409|<span style="color:red">**8.4%**</span>|0.551|<span style="color:red">**7.6%**</span>|
-<span style="color:red">**8.4%**</span>
+
 ## run code
 ``` python
 main.py --dataset=book_transactions --train_dir=default --maxlen=10 --dropout_rate=0.2 --device=cuda
