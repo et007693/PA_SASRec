@@ -35,7 +35,7 @@ optimizer : ADAM
 ## Result
 
 |평가지표|NDCG@10|Improvement|HR@10|Improvement|
-|------|---|---|---|---|
+|:------:|:---:|:---:|:---:|:---:|
 |SASRec|0.377|-|0.512|-|
 |PA_SASRec|0.409|8.4%|0.551|7.6%|
 
