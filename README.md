@@ -39,6 +39,12 @@ optimizer : ADAM
 |SASRec|0.377|0%|0.512|0%|
 |PA_SASRec|0.409|8.4%|0.551|7.6%|
 
+|제목|내용|설명|설명|설명|
+|------|---|---|---|---|
+|테스트1|테스트2|테스트3|테스트3|테스트3|
+|테스트1|테스트2|테스트3|테스트3|테스트3|
+|테스트1|테스트2|테스트3|테스트3|테스트3|
+
 ## run code
 ``` python
 main.py --dataset=book_transactions --train_dir=default --maxlen=10 --dropout_rate=0.2 --device=cuda
