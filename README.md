@@ -34,6 +34,12 @@ optimizer : ADAM
 
 ## Result
 
+|제목|내용|설명|
+|------|---|---|
+|테스트1|테스트2|테스트3|
+|테스트1|테스트2|테스트3|
+|테스트1|테스트2|테스트3|
+
 ## run code
 ``` python
 main.py --dataset=book_transactions --train_dir=default --maxlen=10 --dropout_rate=0.2 --device=cuda
