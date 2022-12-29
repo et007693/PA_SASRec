@@ -46,3 +46,4 @@ main.py --dataset=book_transactions --train_dir=default --maxlen=10 --dropout_ra
 
 ## Reference
 https://github.com/pmixer/SASRec.pytorch
+<span style="color:yellow">노란 글씨입니다.</span>
