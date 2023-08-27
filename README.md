@@ -14,7 +14,7 @@ pytorch version : 1.10.0+cu113
 <img src="https://github.com/et007693/PA_SASRec/blob/main/img/model.png?raw=true" width="600" height="600"></img>
 
   > ### Embedding Layer  
-  모든 유저 구매기록은 최근 10개로 통일, 구매기록 3개 이하인 사용자 제거
+  모든 유저 구매기록은 최근 10개로 통일, 구매기록 3개 이하인 사용자 제거  
   각 유저의 구매기록과 보조정보 별로 임베딩을 생성한 후 생성된 구매기록 정보와 보조정보는 보조정보를 기준으로 각각 다른
   입력값으로 사용
   
